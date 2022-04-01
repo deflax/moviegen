@@ -65,7 +65,7 @@ print ('Muxing audio and video...')
 final = VideoFileClip('tmpvideo.mp4')
 final.set_audio(audio_clip)
 
-final.write_videofile('tmpvideo.mp4',
+final.write_videofile('output.mp4',
   fps=FPS,
   codec=VCODEC,
   audio_codec=ACODEC,
