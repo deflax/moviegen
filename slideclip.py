@@ -62,15 +62,10 @@ video_clip.set_duration(audio_clip.duration)
 video_clip.write_videofile("tmpvideo.mp4", fps=FPS, codec=VCODEC)
 
 print ('Muxing audio and video...')
-final = VideoFileClip('tmpvideo.mp4')
-final.set_audio(audio_clip)
-
-final.write_videofile('output.mp4',
-  fps=FPS,
-  codec=VCODEC,
-  audio_codec=ACODEC,
-  remove_temp=True
-)
+final_audio = AudioFileClip('tmpaudio.mp3')
+final_video = VideoFileClip('tmpvideo.mp4')
+final_video = final_video.set_audio(final_audio.set_duration(final_audio.duration))
+final_video.write_videofile('output.mp4', fps=FPS)
 
 # Cleanup
 os.unlink('tmpvideo.mp4')
