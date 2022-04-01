@@ -1,6 +1,6 @@
 import os
-import sys
 from moviepy.editor import *
+import youtube_dl
 
 H = 720
 W = 1280
@@ -22,7 +22,25 @@ for file in os.listdir(img_dir):
 startime = 0
 clips = []
 
-audio_clip = AudioFileClip('my_sound.mp3')
+yt_url = input("please enter youtube video url:")
+yt_info = youtube_dl.YoutubeDL().extract_info(
+        url = yt_url,download=False
+    )
+#yt_filename = f"{yt_info['title']}.mp3"
+yt_filename = f"tmpaudio.mp3"
+
+yt_options={
+        'format':'bestaudio/best',
+        'keepvideo':False,
+        'outtmpl':yt_filename,
+    }
+
+with youtube_dl.YoutubeDL(yt_options) as ydl:
+        ydl.download([yt_info['webpage_url']])
+
+print("Download complete... {}".format(yt_filename))
+
+audio_clip = AudioFileClip(yt_filename)
 print('audio duration: ' + str(audio_clip.duration))
 print('images found: ' + str(len(slideshow)))
 step = int(audio_clip.duration) / int(len(slideshow))
@@ -32,15 +50,29 @@ print('calculated step: ' + str(step))
 for item in slideshow:
     duration = startime + step
     image = ImageClip(str(item)).set_duration(duration).set_start(startime).resize(height=H, width=W)
-    text = TextClip("start: " + str(startime) + " duration: " + str(duration), font=bold_font, color='white', fontsize=48, interline=9).set_duration(duration - 2).set_start(startime + 1).set_pos(('left', 360)).crossfadein(.3)
-    subtext = TextClip("File: " + str(item), font=plain_font, color='white', fontsize=32, interline=9).set_duration(duration - 4).set_start(startime + 2).set_pos(('left', 440)).crossfadein(.3)
+    text = TextClip("start: " + str(startime) + " duration: " + str(duration), font=bold_font, color='white', fontsize=48, interline=9).set_duration(duration - 2).set_start(startime + 1).set_pos(('left', 60)).crossfadein(.3)
+    subtext = TextClip("File: " + str(item), font=plain_font, color='white', fontsize=32, interline=9).set_duration(duration - 4).set_start(startime + 2).set_pos(('left', 100)).crossfadein(.3)
     slide = CompositeVideoClip([image, text, subtext]).set_duration(duration)
     clips.append(slide)
     # increment next starttime with the step
     startime = startime + step
 
-final_clip = CompositeVideoClip(clips, size=SIZE)
-final_clip.set_audio(audio_clip)
-final_clip.set_duration(audio_clip.duration)
+video_clip = CompositeVideoClip(clips, size=SIZE)
+video_clip.set_duration(audio_clip.duration)
+video_clip.write_videofile("tmpvideo.mp4", fps=FPS, codec=VCODEC)
 
-final_clip.write_videofile("output.mp4", fps=FPS, codec=VCODEC, audio_codec=ACODEC)
+print ('Muxing audio and video...')
+final = VideoFileClip('tmpvideo.mp4')
+final.set_audio(audio_clip)
+
+final.write_videofile('tmpvideo.mp4',
+  fps=FPS,
+  codec=VCODEC,
+  audio_codec=ACODEC,
+  remove_temp=True
+)
+
+# Cleanup
+os.unlink('tmpvideo.mp4')
+os.unlink('tmpaudio.mp3')
+print('Done.')
